@@ -14,6 +14,7 @@ use crate::{DeployDataDefsError, DeployDefs, ProfileInfo};
 struct ActivateCommandData<'a> {
     sudo: &'a Option<String>,
     profile_info: &'a ProfileInfo,
+    specialisation: Option<&'a str>,
     closure: &'a str,
     auto_rollback: bool,
     temp_path: &'a Path,
@@ -75,6 +76,16 @@ fn build_activate_command(data: &ActivateCommandData) -> String {
         self_activate_command = format!("{} --boot", self_activate_command);
     }
 
+    match data.specialisation {
+        Some(specialisation) => {
+            self_activate_command = format!(
+                "{} --specialisation {}",
+                self_activate_command, specialisation
+            )
+        }
+        _ => {}
+    }
+
     if let Some(sudo_cmd) = &data.sudo {
         self_activate_command = format!("{} {}", sudo_cmd, self_activate_command);
     }
@@ -88,6 +99,7 @@ fn test_activation_command_builder() {
     let profile_info = &ProfileInfo::ProfilePath {
         profile_path: "/blah/profiles/test".to_string(),
     };
+    let specialisation = Some("some_profile");
     let closure = "/nix/store/blah/etc";
     let auto_rollback = true;
     let dry_activate = false;
@@ -102,6 +114,7 @@ fn test_activation_command_builder() {
         build_activate_command(&ActivateCommandData {
             sudo: &sudo,
             profile_info,
+            specialisation,
             closure,
             auto_rollback,
             temp_path,
@@ -112,7 +125,7 @@ fn test_activation_command_builder() {
             dry_activate,
             boot,
         }),
-        "sudo -u test /nix/store/blah/etc/activate-rs --debug-logs --log-dir /tmp/something.txt activate '/nix/store/blah/etc' --profile-path '/blah/profiles/test' --temp-path '/tmp' --confirm-timeout 30 --magic-rollback --auto-rollback"
+        "sudo -u test /nix/store/blah/etc/activate-rs --debug-logs --log-dir /tmp/something.txt activate '/nix/store/blah/etc' --profile-path '/blah/profiles/test' --temp-path '/tmp' --confirm-timeout 30 --magic-rollback --auto-rollback --specialisation some_profile"
             .to_string(),
     );
 }
@@ -376,6 +389,7 @@ pub async fn deploy_profile(
     let self_activate_command = build_activate_command(&ActivateCommandData {
         sudo: &deploy_defs.sudo,
         profile_info: &deploy_data.get_profile_info()?,
+        specialisation: deploy_data.specialisation,
         closure: &deploy_data.profile.profile_settings.path,
         auto_rollback,
         temp_path: temp_path,

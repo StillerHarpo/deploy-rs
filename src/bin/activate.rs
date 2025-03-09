@@ -66,6 +66,9 @@ struct ActivateOpts {
     /// The profile name
     #[clap(long, requires = "profile-user")]
     profile_name: Option<String>,
+    /// The profile specialization
+    #[clap(long)]
+    specialisation: Option<String>,
 
     /// Maximum time to wait for confirmation after activation
     #[clap(long)]
@@ -119,6 +122,9 @@ struct RevokeOpts {
     /// The profile name
     #[clap(long, requires = "profile-user")]
     profile_name: Option<String>,
+    /// The profile specialization
+    #[clap(long)]
+    profile_specialization: Option<String>,
 }
 
 #[derive(Error, Debug)]
@@ -480,6 +486,7 @@ fn get_profile_path(
     profile_path: Option<String>,
     profile_user: Option<String>,
     profile_name: Option<String>,
+    profile_specialization: Option<String>,
 ) -> Result<String, GetProfilePathError> {
     match (profile_path, profile_user, profile_name) {
         (Some(profile_path), None, None) => Ok(profile_path),
@@ -490,7 +497,13 @@ fn get_profile_path(
                 "root" => {
                     match &profile_name[..] {
                         // NixOS system profile belongs to the root user, but isn't stored in the 'per-user/root'
-                        "system" => Ok(format!("{}/profiles/system", nix_state_dir)),
+                        "system" => match profile_specialization {
+                            Some(profile_specialization) => Ok(format!(
+                                "{}/profiles/system/specialisation/{}",
+                                nix_state_dir, profile_specialization
+                            )),
+                            _ => Ok(format!("{}/profiles/system", nix_state_dir)),
+                        },
                         _ => Ok(format!(
                             "{}/profiles/per-user/root/{}",
                             nix_state_dir, profile_name
@@ -553,6 +566,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 activate_opts.profile_path,
                 activate_opts.profile_user,
                 activate_opts.profile_name,
+                activate_opts.specialisation,
             )?,
             activate_opts.closure,
             activate_opts.auto_rollback,
@@ -573,6 +587,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             revoke_opts.profile_path,
             revoke_opts.profile_user,
             revoke_opts.profile_name,
+            revoke_opts.profile_specialization,
         )?)
         .await
         .map_err(|x| Box::new(x) as Box<dyn std::error::Error>),

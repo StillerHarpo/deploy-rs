@@ -67,6 +67,9 @@ pub struct Opts {
     /// Override the profile user with the given value
     #[clap(long)]
     profile_user: Option<String>,
+    /// The profile specialisation
+    #[clap(long)]
+    specialisation: Option<String>,
     /// Override the SSH options used
     #[clap(long, allow_hyphen_values = true)]
     ssh_opts: Option<String>,
@@ -426,6 +429,7 @@ async fn run_deploy(
     boot: bool,
     log_dir: &Option<String>,
     rollback_succeeded: bool,
+    specialisation: &Option<String>,
 ) -> Result<(), RunDeployError> {
     let to_deploy: ToDeploy = deploy_flakes
         .iter()
@@ -538,6 +542,7 @@ async fn run_deploy(
             node_name,
             profile,
             profile_name,
+            specialisation.as_deref(),
             cmd_overrides,
             debug_logs,
             log_dir.as_deref(),
@@ -727,6 +732,7 @@ pub async fn run(args: Option<&ArgMatches>) -> Result<(), RunError> {
         opts.boot,
         &opts.log_dir,
         opts.rollback_succeeded.unwrap_or(true),
+        &opts.specialisation,
     )
     .await?;
 

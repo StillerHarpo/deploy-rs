@@ -321,6 +321,7 @@ pub struct DeployData<'a> {
     pub node: &'a data::Node,
     pub profile_name: &'a str,
     pub profile: &'a data::Profile,
+    pub specialisation: Option<&'a str>,
 
     pub cmd_overrides: &'a CmdOverrides,
 
@@ -415,6 +416,7 @@ pub fn make_deploy_data<'a, 's>(
     node_name: &'a str,
     profile: &'a data::Profile,
     profile_name: &'a str,
+    specialisation: Option<&'a str>,
     cmd_overrides: &'a CmdOverrides,
     debug_logs: bool,
     log_dir: Option<&'a str>,
@@ -460,6 +462,7 @@ pub fn make_deploy_data<'a, 's>(
         node,
         profile_name,
         profile,
+        specialisation,
         cmd_overrides,
         merged_settings,
         debug_logs,
